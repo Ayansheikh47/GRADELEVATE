@@ -1,0 +1,14 @@
+# Backend sensitive config
+gradelevate-backend/src/main/resources/application.properties
+
+# Backend build files
+gradelevate-backend/target/
+
+# Frontend dependencies
+gradelevate-frontend/node_modules/
+gradelevate-frontend/dist/
+
+# IDE files
+.idea/
+*.iml
+.vscode/
