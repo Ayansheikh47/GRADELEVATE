@@ -90,6 +90,14 @@ const LoginPage = () => {
             {loading ? 'Signing in...' : 'Sign In'}
           </button>
 
+          {/* Add this below the Sign In button */}
+        <div className="text-center mt-2">
+          <Link to="/forgot-password"
+            className="text-sm text-indigo-500 hover:underline">
+            Forgot your password?
+          </Link>
+        </div>
+
         </form>
 
         {/* Footer */}

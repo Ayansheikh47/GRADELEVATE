@@ -11,4 +11,5 @@ export const filterAiTools = (category, pricingType) => {
   if (category) params.append('category', category);
   if (pricingType) params.append('pricingType', pricingType);
   return axiosInstance.get(`/ai-tools/filter?${params.toString()}`);
+ 
 };

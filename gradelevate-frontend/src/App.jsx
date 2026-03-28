@@ -15,6 +15,8 @@ import NotFoundPage       from './pages/NotFoundPage';
 import AdminPage from './pages/AdminPage';
 import SkillDetailPage from './pages/SkillDetailPage';
 import CareerDetailPage from './pages/CareerDetailPage';
+import ForgotPasswordPage from './pages/ForgotPasswordPage';
+import ResetPasswordPage from './pages/ResetPasswordPage';
 
 
 
@@ -65,6 +67,9 @@ function App() {
           <Route path="/careers/:careerId" element={
             <ProtectedRoute><CareerDetailPage /></ProtectedRoute>
           }/>
+
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
 
         </Routes>
       </BrowserRouter>
