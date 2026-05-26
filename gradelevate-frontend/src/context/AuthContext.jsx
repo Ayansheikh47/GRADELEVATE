@@ -18,10 +18,15 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const login = (userData, jwtToken) => {
-    setUser(userData);
+    // Normalize role to uppercase always
+    const normalizedUser = {
+      ...userData,
+      role: userData.role?.toUpperCase()
+    };
+    setUser(normalizedUser);
     setToken(jwtToken);
     localStorage.setItem('token', jwtToken);
-    localStorage.setItem('user', JSON.stringify(userData));
+    localStorage.setItem('user', JSON.stringify(normalizedUser));
   };
 
   const logout = () => {
@@ -39,4 +44,3 @@ export const AuthProvider = ({ children }) => {
 };
 
 export const useAuth = () => useContext(AuthContext);
-

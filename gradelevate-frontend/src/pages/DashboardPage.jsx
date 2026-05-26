@@ -2,9 +2,9 @@ import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
-import { getRecommendations } from '../api/careerApi';
+import { getSmartRecommendations } from '../api/profileApi';
 import { getProfile } from '../api/profileApi';
-import { Briefcase, BookOpen, Cpu, FileText, LogOut, TrendingUp, ChevronRight, User } from 'lucide-react';
+import { Briefcase, BookOpen, Cpu, FileText, LogOut, TrendingUp, ChevronRight, User, ShieldCheck } from 'lucide-react';
 
 const DashboardPage = () => {
   const { user, logout } = useAuth();
@@ -29,9 +29,9 @@ const DashboardPage = () => {
         setProfile(null);
       }
 
-      // Try to get recommendations
+      // Try to get smart recommendations (same as onboarding)
       try {
-        const recRes = await getRecommendations();
+        const recRes = await getSmartRecommendations();
         setRecommendations(recRes.data);
       } catch {
         // No recommendations yet — that's fine
@@ -89,6 +89,11 @@ const DashboardPage = () => {
               <item.icon size={16} />{item.label}
             </Link>
           ))}
+          {user?.role === 'ADMIN' && (
+            <Link to="/admin" className="flex items-center gap-1.5 text-sm text-purple-600 hover:text-purple-800 font-semibold transition">
+              <ShieldCheck size={16} />Admin
+            </Link>
+          )}
         </div>
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2 text-sm text-gray-600">
@@ -126,7 +131,7 @@ const DashboardPage = () => {
         <div className="grid grid-cols-4 gap-4 mb-8">
           {[
             { label: 'Career Matches', value: recommendations.length, icon: TrendingUp, color: 'text-indigo-600', bg: 'bg-indigo-50', path: null },
-            { label: 'Top Match Score', value: recommendations[0] ? `${recommendations[0].score}%` : '—', icon: Briefcase, color: 'text-green-600', bg: 'bg-green-50', path: null },
+            { label: 'Top Match Score', value: recommendations[0] ? `${recommendations[0].matchScore}%` : '—', icon: Briefcase, color: 'text-green-600', bg: 'bg-green-50', path: null },
             { label: 'Explore Skills', value: 'Browse', icon: BookOpen, color: 'text-blue-600', bg: 'bg-blue-50', path: '/skills' },
             { label: 'Analyze Resume', value: 'Upload', icon: FileText, color: 'text-purple-600', bg: 'bg-purple-50', path: '/resume' },
           ].map((stat) => (
@@ -173,13 +178,13 @@ const DashboardPage = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {recommendations.slice(0, 3).map((career) => (
                 <div
-                  key={career.id}
-                  onClick={() => navigate(`/careers/${career.id}`)}
+                  key={career.careerId}
+                  onClick={() => navigate(`/careers/${career.careerId}`)}
                   className="bg-white rounded-xl p-5 shadow-sm border border-gray-100 hover:shadow-md hover:border-indigo-200 transition cursor-pointer group"
                 >
                   <div className="flex items-center justify-between mb-3">
-                    <span className={`text-2xl font-bold ${getScoreColor(career.score)}`}>
-                      {career.score}%
+                    <span className={`text-2xl font-bold ${getScoreColor(career.matchScore)}`}>
+                      {career.matchScore}%
                     </span>
                     {career.demandLevel && (
                       <span className={`text-xs font-medium px-2.5 py-0.5 rounded-full ${getDemandColor(career.demandLevel)}`}>
@@ -188,7 +193,7 @@ const DashboardPage = () => {
                     )}
                   </div>
                   <h4 className="font-bold text-gray-800 text-base group-hover:text-indigo-600 transition mb-1">
-                    {career.title}
+                    {career.careerTitle}
                   </h4>
                   <p className="text-gray-500 text-sm line-clamp-2 mb-3">{career.description}</p>
                   {career.avgSalary && (

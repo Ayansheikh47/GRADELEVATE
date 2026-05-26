@@ -17,6 +17,8 @@ import SkillDetailPage from './pages/SkillDetailPage';
 import CareerDetailPage from './pages/CareerDetailPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
+import VerifyEmailPage from './pages/VerifyEmailPage';
+
 
 
 
@@ -70,6 +72,9 @@ function App() {
 
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/reset-password" element={<ResetPasswordPage />} />
+
+          <Route path="/verify-email" element={<VerifyEmailPage />} />
+
 
         </Routes>
       </BrowserRouter>

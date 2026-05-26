@@ -74,7 +74,9 @@ const AdminPage = () => {
   const [aiToolForm, setAiToolForm] = useState({ name: '', description: '', useCase: '', websiteUrl: '', logoUrl: '', pricingType: 'FREE', category: '' });
 
   useEffect(() => {
-    if (user?.role !== 'ADMIN') { navigate('/dashboard'); return; }
+    // Always try to load stats - the backend will return 403 if not admin.
+    // This avoids the stale-localStorage bug where DB role is ADMIN but
+    // localStorage still says USER (happens when role is set in DB without re-login).
     fetchStats();
   }, []);
 
@@ -85,12 +87,12 @@ const AdminPage = () => {
     if (activeTab === 'AI Tools') fetchAiTools();
   }, [activeTab]);
 
-  const fetchStats    = async () => { try { const r = await getAdminStats(); setStats(r.data); } catch { toast.error('Failed to load stats'); } };
-  const fetchCareers  = async () => { try { const r = await adminGetCareers(); setCareers(r.data); } catch {} };
-  const fetchSkills   = async () => { try { const r = await adminGetSkills(); setSkills(r.data); } catch {} };
-  const fetchAllSkills = async () => { try { const r = await getAllSkills(); setAllSkills(r.data); } catch {} };
-  const fetchResources = async () => { try { const r = await adminGetResources(); setResources(r.data); } catch {} };
-  const fetchAiTools  = async () => { try { const r = await adminGetAiTools(); setAiTools(r.data); } catch {} };
+  const fetchStats = async () => { try { const r = await getAdminStats(); setStats(r.data); } catch (err) { if (err.response?.status === 403) { toast.error('Access denied. Admin role required.'); navigate('/dashboard'); } else { toast.error('Failed to load stats') } } };
+  const fetchCareers = async () => { try { const r = await adminGetCareers(); setCareers(r.data); } catch { } };
+  const fetchSkills = async () => { try { const r = await adminGetSkills(); setSkills(r.data); } catch { } };
+  const fetchAllSkills = async () => { try { const r = await getAllSkills(); setAllSkills(r.data); } catch { } };
+  const fetchResources = async () => { try { const r = await adminGetResources(); setResources(r.data); } catch { } };
+  const fetchAiTools = async () => { try { const r = await adminGetAiTools(); setAiTools(r.data); } catch { } };
 
   const handleLogout = () => { logout(); navigate('/login'); };
 
@@ -149,10 +151,10 @@ const AdminPage = () => {
   const handleDelete = async (type, id) => {
     if (!window.confirm('Are you sure you want to delete this?')) return;
     try {
-      if (type === 'career')   { await adminDeleteCareer(id);   fetchCareers(); }
-      if (type === 'skill')    { await adminDeleteSkill(id);    fetchSkills(); }
+      if (type === 'career') { await adminDeleteCareer(id); fetchCareers(); }
+      if (type === 'skill') { await adminDeleteSkill(id); fetchSkills(); }
       if (type === 'resource') { await adminDeleteResource(id); fetchResources(); }
-      if (type === 'aitool')   { await adminDeleteAiTool(id);   fetchAiTools(); }
+      if (type === 'aitool') { await adminDeleteAiTool(id); fetchAiTools(); }
       toast.success('Deleted successfully');
     } catch { toast.error('Failed to delete'); }
   };
@@ -176,12 +178,12 @@ const AdminPage = () => {
   };
 
   const statCards = stats ? [
-    { label: 'Total Users',    value: stats.totalUsers,    icon: Users,     color: 'bg-blue-50 text-blue-600' },
-    { label: 'Careers',        value: stats.totalCareers,  icon: Briefcase, color: 'bg-indigo-50 text-indigo-600' },
-    { label: 'Skills',         value: stats.totalSkills,   icon: BookOpen,  color: 'bg-purple-50 text-purple-600' },
-    { label: 'Resources',      value: stats.totalResources,icon: FileText,  color: 'bg-green-50 text-green-600' },
-    { label: 'AI Tools',       value: stats.totalAiTools,  icon: Cpu,       color: 'bg-orange-50 text-orange-600' },
-    { label: 'Resumes Analyzed',value: stats.totalResumes, icon: FileText,  color: 'bg-red-50 text-red-600' },
+    { label: 'Total Users', value: stats.totalUsers, icon: Users, color: 'bg-blue-50 text-blue-600' },
+    { label: 'Careers', value: stats.totalCareers, icon: Briefcase, color: 'bg-indigo-50 text-indigo-600' },
+    { label: 'Skills', value: stats.totalSkills, icon: BookOpen, color: 'bg-purple-50 text-purple-600' },
+    { label: 'Resources', value: stats.totalResources, icon: FileText, color: 'bg-green-50 text-green-600' },
+    { label: 'AI Tools', value: stats.totalAiTools, icon: Cpu, color: 'bg-orange-50 text-orange-600' },
+    { label: 'Resumes Analyzed', value: stats.totalResumes, icon: FileText, color: 'bg-red-50 text-red-600' },
   ] : [];
 
   const tabIcons = { Dashboard: LayoutDashboard, Careers: Briefcase, Skills: BookOpen, Resources: FileText, 'AI Tools': Cpu };
@@ -227,19 +229,22 @@ const AdminPage = () => {
           <div>
             <h2 className="text-2xl font-bold text-gray-800 mb-6">Overview</h2>
             <div className="grid grid-cols-3 gap-4">
-              {statCards.map((card) => (
-                <div key={card.label} className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
-                  <div className="flex items-center gap-3">
-                    <div className={`p-3 rounded-lg ${card.color.split(' ')[0]}`}>
-                      <card.icon size={20} className={card.color.split(' ')[1]} />
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-500">{card.label}</p>
-                      <p className="text-2xl font-black text-gray-800">{card.value}</p>
+              {statCards.map((card) => {
+                const Icon = card.icon;
+                return (
+                  <div key={card.label} className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
+                    <div className="flex items-center gap-3">
+                      <div className={`p-3 rounded-lg ${card.color.split(' ')[0]}`}>
+                        <Icon size={20} className={card.color.split(' ')[1]} />
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-500">{card.label}</p>
+                        <p className="text-2xl font-black text-gray-800">{card.value}</p>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}
@@ -271,7 +276,7 @@ const AdminPage = () => {
                       <td className="px-4 py-3">
                         <span className="bg-blue-100 text-blue-700 text-xs px-2 py-0.5 rounded-full">{career.demandLevel}</span>
                       </td>
-                      <td className="px-4 py-3 text-gray-500">{career.avgSalary || '—'}</td>
+                      <td className="px-4 py-3 text-gray-500">{career.avgSalary || '-'}</td>
                       <td className="px-4 py-3">
                         <button onClick={() => { setLinkCareer(career); setModal('linkSkill'); fetchAllSkills(); }} className="flex items-center gap-1 text-xs text-indigo-600 hover:text-indigo-800 font-medium">
                           <Link2 size={12} />{career.skills?.length || 0} skills
@@ -318,8 +323,8 @@ const AdminPage = () => {
                   {skills.map((skill) => (
                     <tr key={skill.id} className="hover:bg-gray-50 transition">
                       <td className="px-4 py-3 font-medium text-gray-800">{skill.name}</td>
-                      <td className="px-4 py-3"><span className="bg-purple-100 text-purple-700 text-xs px-2 py-0.5 rounded-full">{skill.category || '—'}</span></td>
-                      <td className="px-4 py-3 text-gray-500 max-w-xs truncate">{skill.description || '—'}</td>
+                      <td className="px-4 py-3"><span className="bg-purple-100 text-purple-700 text-xs px-2 py-0.5 rounded-full">{skill.category || '-'}</span></td>
+                      <td className="px-4 py-3 text-gray-500 max-w-xs truncate">{skill.description || '-'}</td>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2">
                           <button onClick={() => openModal('skill', skill)} className="p-1.5 hover:bg-indigo-50 rounded-lg transition">
@@ -402,10 +407,10 @@ const AdminPage = () => {
                   {aiTools.map((tool) => (
                     <tr key={tool.id} className="hover:bg-gray-50 transition">
                       <td className="px-4 py-3 font-medium text-gray-800">{tool.name}</td>
-                      <td className="px-4 py-3"><span className="bg-orange-100 text-orange-700 text-xs px-2 py-0.5 rounded-full">{tool.category || '—'}</span></td>
+                      <td className="px-4 py-3"><span className="bg-orange-100 text-orange-700 text-xs px-2 py-0.5 rounded-full">{tool.category || '-'}</span></td>
                       <td className="px-4 py-3"><span className="bg-blue-100 text-blue-700 text-xs px-2 py-0.5 rounded-full">{tool.pricingType}</span></td>
                       <td className="px-4 py-3 text-indigo-500 max-w-xs truncate">
-                        {tool.websiteUrl ? <a href={tool.websiteUrl} target="_blank" rel="noreferrer" className="hover:underline">{tool.websiteUrl}</a> : '—'}
+                        {tool.websiteUrl ? <a href={tool.websiteUrl} target="_blank" rel="noreferrer" className="hover:underline">{tool.websiteUrl}</a> : '-'}
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2">
@@ -477,11 +482,11 @@ const AdminPage = () => {
             </Select>
             <Input label="URL *" value={resourceForm.url} onChange={(e) => setResourceForm({ ...resourceForm, url: e.target.value })} placeholder="https://..." />
             <Select label="Link to Skill" value={resourceForm.skillId} onChange={(e) => setResourceForm({ ...resourceForm, skillId: e.target.value })}>
-              <option value="">— Select Skill —</option>
+              <option value="">- Select Skill -</option>
               {allSkills.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
             </Select>
             <Select label="Link to Career" value={resourceForm.careerId} onChange={(e) => setResourceForm({ ...resourceForm, careerId: e.target.value })}>
-              <option value="">— Select Career —</option>
+              <option value="">- Select Career -</option>
               {careers.map((c) => <option key={c.id} value={c.id}>{c.title}</option>)}
             </Select>
             <button onClick={handleResourceSubmit} disabled={loading} className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2.5 rounded-lg transition disabled:opacity-50 flex items-center justify-center gap-2">
@@ -514,7 +519,7 @@ const AdminPage = () => {
 
       {/* Link Skills to Career Modal */}
       {modal === 'linkSkill' && linkCareer && (
-        <Modal title={`Link Skills — ${linkCareer.title}`} onClose={closeModal}>
+        <Modal title={`Link Skills - ${linkCareer.title}`} onClose={closeModal}>
           <div className="space-y-4">
             <div>
               <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Linked Skills</p>
