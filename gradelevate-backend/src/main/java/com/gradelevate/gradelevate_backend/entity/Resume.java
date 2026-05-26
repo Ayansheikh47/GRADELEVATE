@@ -10,8 +10,10 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "resumes")
-@Getter @Setter
-@NoArgsConstructor @AllArgsConstructor
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 @Builder
 public class Resume {
 

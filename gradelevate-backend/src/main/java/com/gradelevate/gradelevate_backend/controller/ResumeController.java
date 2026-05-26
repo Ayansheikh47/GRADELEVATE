@@ -23,8 +23,7 @@ public class ResumeController {
     public ResponseEntity<Resume> uploadResume(
             @AuthenticationPrincipal UserDetails userDetails,
             @RequestParam("file") MultipartFile file,
-            @RequestParam(value = "jobDescription", required = false)
-            String jobDescription) {
+            @RequestParam(value = "jobDescription", required = false) String jobDescription) {
 
         return ResponseEntity.ok(
                 resumeService.uploadAndAnalyze(

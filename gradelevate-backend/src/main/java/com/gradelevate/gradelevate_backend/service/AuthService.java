@@ -18,6 +18,7 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
     private final AuthenticationManager authenticationManager;
+    private final EmailVerificationService emailVerificationService;
 
     public AuthResponse register(RegisterRequest request) {
         if (userRepository.existsByEmail(request.getEmail())) {
@@ -29,23 +30,49 @@ public class AuthService {
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .role(User.Role.USER)
+                .isVerified(false)
                 .build();
 
         userRepository.save(user);
 
-        String token = jwtUtil.generateToken(user.getEmail());
-        return new AuthResponse(token, user.getEmail(), user.getRole().name());
+        // Send verification email
+        try {
+            emailVerificationService.sendVerificationEmail(user);
+        } catch (Exception e) {
+            // Don't fail registration if email fails
+        }
+
+        return new AuthResponse(
+                null,
+                user.getEmail(),
+                user.getRole().name(),
+                false,
+                "Registration successful! Please check your email to verify your account."
+        );
     }
 
     public AuthResponse login(LoginRequest request) {
+        User user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new UsernameNotFoundException(
+                        "No account found with this email"));
+
+        // Only block login if explicitly false
+        // null or true = allow login (handles existing users)
+        if (Boolean.FALSE.equals(user.getIsVerified())) {
+            throw new RuntimeException("EMAIL_NOT_VERIFIED");
+        }
+
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                         request.getEmail(), request.getPassword()));
 
-        User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
-
         String token = jwtUtil.generateToken(user.getEmail());
-        return new AuthResponse(token, user.getEmail(), user.getRole().name());
+        return new AuthResponse(
+                token,
+                user.getEmail(),
+                user.getRole().name(),
+                true,
+                "Login successful"
+        );
     }
-}
+}

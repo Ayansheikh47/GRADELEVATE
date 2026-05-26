@@ -9,8 +9,10 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "resume_analyses")
-@Getter @Setter
-@NoArgsConstructor @AllArgsConstructor
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 @Builder
 public class ResumeAnalysis {
 
@@ -24,9 +26,9 @@ public class ResumeAnalysis {
     private Resume resume;
 
     @Column(name = "ai_feedback", columnDefinition = "TEXT")
-    private String aiFeedback;      // JSON string from AI response
+    private String aiFeedback; // JSON string from AI response
 
-    private Integer score;          // 0-100 resume score
+    private Integer score; // 0-100 resume score
 
     @Column(name = "analyzed_at")
     @CreationTimestamp

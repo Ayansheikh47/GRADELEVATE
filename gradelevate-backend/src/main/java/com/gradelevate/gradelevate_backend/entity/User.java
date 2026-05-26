@@ -41,7 +41,7 @@ public class User {
     private Role role = Role.USER;
 
     @Column(name = "is_verified")
-    private boolean isVerified = false;
+    private Boolean isVerified = false;
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
@@ -57,5 +57,13 @@ public class User {
 
     public enum Role {
         USER, ADMIN
+    }
+
+    public void setIsVerified(Boolean isVerified) {
+        this.isVerified = isVerified;
+    }
+
+    public Boolean getIsVerified() {
+        return isVerified;
     }
 }

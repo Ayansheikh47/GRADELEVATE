@@ -37,16 +37,12 @@ public class SecurityConfig {
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        // Public auth endpoints
                         .requestMatchers("/api/auth/**").permitAll()
-                        // Public GET endpoints
                         .requestMatchers(HttpMethod.GET, "/api/ai-tools/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/careers/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/skills/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/resources/**").permitAll()
-                        // Admin only
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
-                        // Everything else needs authentication
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthFilter,
