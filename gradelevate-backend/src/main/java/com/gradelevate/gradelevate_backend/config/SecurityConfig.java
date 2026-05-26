@@ -31,22 +31,41 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+
         http
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(csrf -> csrf.disable())
+
                 .sessionManagement(session ->
-                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                )
+
                 .authorizeHttpRequests(auth -> auth
+
+                        // Public routes
+                        .requestMatchers("/", "/error").permitAll()
+
+                        // Auth APIs
                         .requestMatchers("/api/auth/**").permitAll()
+
+                        // Public GET APIs
                         .requestMatchers(HttpMethod.GET, "/api/ai-tools/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/careers/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/skills/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/resources/**").permitAll()
+
+                        // Admin APIs
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
+
+                        // All other requests need authentication
                         .anyRequest().authenticated()
                 )
-                .addFilterBefore(jwtAuthFilter,
-                        UsernamePasswordAuthenticationFilter.class);
+
+                // JWT Filter
+                .addFilterBefore(
+                        jwtAuthFilter,
+                        UsernamePasswordAuthenticationFilter.class
+                );
 
         return http.build();
     }
@@ -58,19 +77,39 @@ public class SecurityConfig {
 
     @Bean
     public AuthenticationManager authenticationManager(
-            AuthenticationConfiguration config) throws Exception {
+            AuthenticationConfiguration config
+    ) throws Exception {
         return config.getAuthenticationManager();
     }
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
+
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of("http://localhost:5173"));
-        config.setAllowedMethods(List.of("GET","POST","PUT","DELETE","OPTIONS"));
+
+        // Allow frontend URLs
+        config.setAllowedOriginPatterns(List.of("*"));
+
+        // Allowed HTTP methods
+        config.setAllowedMethods(List.of(
+                "GET",
+                "POST",
+                "PUT",
+                "DELETE",
+                "OPTIONS"
+        ));
+
+        // Allow all headers
         config.setAllowedHeaders(List.of("*"));
+
+        // Allow credentials
         config.setAllowCredentials(true);
-        return new UrlBasedCorsConfigurationSource(){{
-            registerCorsConfiguration("/**", config);
-        }};
+
+        UrlBasedCorsConfigurationSource source =
+                new UrlBasedCorsConfigurationSource();
+
+        source.registerCorsConfiguration("/**", config);
+
+        return source;
     }
 }
